@@ -1,30 +1,41 @@
 #include "activity_actor.h"
-#include "activity_actor_definitions.h"
 
+#include <algorithm>
 #include <array>
 #include <cmath>
+#include <cstddef>
+#include <cstdint>
 #include <functional>
 #include <list>
+#include <map>
+#include <new>
+#include <string>
+#include <type_traits>
 #include <utility>
+#include <vector>
 
 #include "action.h"
+#include "activity_actor_definitions.h"
 #include "activity_handlers.h" // put_into_vehicle_or_drop and drop_on_map
 #include "advanced_inv.h"
 #include "avatar.h"
 #include "avatar_action.h"
 #include "bodypart.h"
+#include "calendar.h"
 #include "character.h"
+#include "coordinates.h"
+#include "craft_command.h"
 #include "debug.h"
 #include "enums.h"
 #include "event.h"
 #include "event_bus.h"
 #include "flag.h"
-#include "flat_set.h"
 #include "game.h"
+#include "game_constants.h"
 #include "gates.h"
 #include "gun_mode.h"
+#include "handle_liquid.h"
 #include "iexamine.h"
-#include "int_id.h"
 #include "item.h"
 #include "item_contents.h"
 #include "item_group.h"
@@ -35,24 +46,32 @@
 #include "map.h"
 #include "map_iterator.h"
 #include "mapdata.h"
+#include "memory_fast.h"
 #include "messages.h"
+#include "monster.h"
 #include "morale_types.h"
+#include "mtype.h"
 #include "npc.h"
 #include "optional.h"
 #include "options.h"
 #include "output.h"
 #include "pickup.h"
+#include "pimpl.h"
 #include "player.h"
 #include "player_activity.h"
 #include "point.h"
 #include "ranged.h"
+#include "recipe.h"
+#include "requirements.h"
 #include "ret_val.h"
 #include "rng.h"
 #include "sounds.h"
+#include "string_formatter.h"
 #include "timed_event.h"
 #include "translations.h"
 #include "ui.h"
 #include "uistate.h"
+#include "units.h"
 #include "value_ptr.h"
 #include "vehicle.h"
 #include "vpart_position.h"
@@ -355,7 +374,7 @@ void autodrive_activity_actor::start( player_activity &act, Character &who )
 
 void autodrive_activity_actor::do_turn( player_activity &act, Character &who )
 {
-    if( who.in_vehicle && who.controlling_vehicle && player_vehicle->is_autodriving &&
+    if( who.in_vehicle && who.controlling_vehicle && player_vehicle && player_vehicle->is_autodriving &&
         !who.omt_path.empty() && !player_vehicle->omt_path.empty() ) {
         player_vehicle->do_autodrive();
         if( who.global_omt_location() == who.omt_path.back() ) {
@@ -374,13 +393,15 @@ void autodrive_activity_actor::do_turn( player_activity &act, Character &who )
 void autodrive_activity_actor::canceled( player_activity &act, Character &who )
 {
     who.add_msg_if_player( m_info, _( "Auto-drive canceled." ) );
-    if( !player_vehicle->omt_path.empty() ) {
+    if( player_vehicle && !player_vehicle->omt_path.empty() ) {
         player_vehicle->omt_path.clear();
     }
     if( !who.omt_path.empty() ) {
         who.omt_path.clear();
     }
-    player_vehicle->is_autodriving = false;
+    if( player_vehicle ) {
+        player_vehicle->is_autodriving = false;
+    }
     act.set_to_null();
 }
 
@@ -934,10 +955,16 @@ void move_items_activity_actor::do_turn( player_activity &act, Character &who )
 
         // Check that we can pick it up.
         if( !target->made_of_from_type( phase_id::LIQUID ) ) {
-            // Don't need to make a copy here since movement can't be canceled
             item &leftovers = *target;
             // Make a copy to be put in the destination location
             item newit = leftovers;
+
+            if( newit.is_owned_by( who, true ) ) {
+                newit.set_owner( who );
+            } else {
+                continue;
+            }
+
             // Handle charges, quantity == 0 means move all
             if( quantity != 0 && newit.count_by_charges() ) {
                 newit.charges = std::min( newit.charges, quantity );
@@ -948,11 +975,6 @@ void move_items_activity_actor::do_turn( player_activity &act, Character &who )
 
             // This is for hauling across zlevels, remove when going up and down stairs
             // is no longer teleportation
-            if( newit.is_owned_by( who, true ) ) {
-                newit.set_owner( who );
-            } else {
-                continue;
-            }
             const tripoint src = target.position();
             const int distance = src.z == dest.z ? std::max( rl_dist( src, dest ), 1 ) : 1;
             // Yuck, I'm sticking weariness scaling based on activity level here
@@ -973,6 +995,9 @@ void move_items_activity_actor::do_turn( player_activity &act, Character &who )
     if( target_items.empty() ) {
         // Nuke the current activity, leaving the backlog alone.
         act.set_to_null();
+        if( who.is_hauling() && !get_map().has_haulable_items( who.pos() ) ) {
+            who.stop_hauling();
+        }
     }
 }
 
@@ -1002,19 +1027,27 @@ std::unique_ptr<activity_actor> move_items_activity_actor::deserialize( JsonIn &
     return actor.clone();
 }
 
+static void cancel_pickup( Character &who )
+{
+    who.cancel_activity();
+    if( who.is_hauling() && !get_map().has_haulable_items( who.pos() ) ) {
+        who.stop_hauling();
+    }
+}
+
 void pickup_activity_actor::do_turn( player_activity &, Character &who )
 {
     // If we don't have target items bail out
     if( target_items.empty() ) {
-        who.cancel_activity();
+        cancel_pickup( who );
         return;
     }
 
     // If the player moves while picking up (i.e.: in a moving vehicle) cancel
     // the activity, only populate starting_pos when grabbing from the ground
     if( starting_pos && *starting_pos != who.pos() ) {
-        who.cancel_activity();
         who.add_msg_if_player( _( "Moving canceled auto-pickup." ) );
+        cancel_pickup( who );
         return;
     }
 
@@ -1027,7 +1060,7 @@ void pickup_activity_actor::do_turn( player_activity &, Character &who )
     // If there are items left we ran out of moves, so continue the activity
     // Otherwise, we are done.
     if( !keep_going || target_items.empty() ) {
-        who.cancel_activity();
+        cancel_pickup( who );
 
         if( who.get_value( "THIEF_MODE_KEEP" ) != "YES" ) {
             who.set_value( "THIEF_MODE", "THIEF_ASK" );
@@ -1123,6 +1156,7 @@ void lockpick_activity_actor::finish( player_activity &act, Character &who )
     std::string open_message;
     if( ter_type == t_chaingate_l ) {
         new_ter_type = t_chaingate_c;
+        open_message = _( "With a satisfying click, the lock on the gate opens." );
     } else if( ter_type == t_door_locked || ter_type == t_door_locked_alarm ||
                ter_type == t_door_locked_interior ) {
         new_ter_type = t_door_c;
@@ -1158,13 +1192,16 @@ void lockpick_activity_actor::finish( player_activity &act, Character &who )
 
     // Without at least a basic lockpick proficiency, your skill level is effectively 6 levels lower.
     int proficiency_effect = -3;
+    int duration_proficiency_factor = 10;
     if( who.has_proficiency( proficiency_prof_lockpicking ) ) {
         // If you have the basic lockpick prof, negate the above penalty
         proficiency_effect = 0;
+        duration_proficiency_factor = 5;
     }
     if( who.has_proficiency( proficiency_prof_lockpicking_expert ) ) {
         // If you have the locksmith proficiency, your skill level is effectively 4 levels higher.
         proficiency_effect = 3;
+        duration_proficiency_factor = 1;
     }
 
     // We get our average roll by adding the above factors together. For a person with no skill, average stats, no proficiencies, and an improvised lockpick, mean_roll will be 2.
@@ -1231,6 +1268,11 @@ void lockpick_activity_actor::finish( player_activity &act, Character &who )
     if( destroy && lockpick.has_value() ) {
         ( *lockpick ).remove_item();
     }
+
+    who.practice_proficiency( proficiency_prof_lockpicking,
+                              time_duration::from_moves( act.moves_total ) / duration_proficiency_factor );
+    who.practice_proficiency( proficiency_prof_lockpicking_expert,
+                              time_duration::from_moves( act.moves_total ) / duration_proficiency_factor );
 }
 
 cata::optional<tripoint> lockpick_activity_actor::select_location( avatar &you )
@@ -1577,17 +1619,14 @@ void unload_activity_actor::unload( Character &who, item_location &target )
     bool actually_unloaded = false;
 
     if( it.is_container() ) {
-
+        contents_change_handler handler;
         bool changed = false;
         for( item *contained : it.contents.all_items_top() ) {
             int old_charges = contained->charges;
             const bool consumed = who.add_or_drop_with_msg( *contained, true, &it );
             if( consumed || contained->charges != old_charges ) {
                 changed = true;
-                item_pocket *const parent_pocket = it.contained_where( *contained );
-                if( parent_pocket ) {
-                    parent_pocket->unseal();
-                }
+                handler.unseal_pocket_containing( item_location( target, contained ) );
             }
             if( consumed ) {
                 it.remove_item( *contained );
@@ -1597,12 +1636,16 @@ void unload_activity_actor::unload( Character &who, item_location &target )
         if( changed ) {
             it.on_contents_changed();
             who.invalidate_weight_carried_cache();
+            handler.handle_by( who );
         }
         return;
     }
 
     std::vector<item *> remove_contained;
     for( item *contained : it.contents.all_items_top() ) {
+        if( contained->ammo_type() == ammotype( "plutonium" ) ) {
+            contained->charges /= PLUTONIUM_CHARGES;
+        }
         if( who.as_player()->add_or_drop_with_msg( *contained, true ) ) {
             qty += contained->charges;
             remove_contained.push_back( contained );
@@ -1662,7 +1705,7 @@ craft_activity_actor::craft_activity_actor( item_location &it, const bool is_lon
 {
 }
 
-static bool check_if_craft_okay( item_location &craft_item, Character &crafter )
+bool craft_activity_actor::check_if_craft_okay( item_location &craft_item, Character &crafter )
 {
     item *craft = craft_item.get_item();
 
@@ -1682,7 +1725,10 @@ static bool check_if_craft_okay( item_location &craft_item, Character &crafter )
         return false;
     }
 
-    return crafter.can_continue_craft( *craft );
+    if( !cached_continuation_requirements ) {
+        cached_continuation_requirements = craft->get_continue_reqs();
+    }
+    return crafter.can_continue_craft( *craft, *cached_continuation_requirements );
 }
 
 void craft_activity_actor::start( player_activity &act, Character &crafter )
@@ -1721,9 +1767,11 @@ void craft_activity_actor::do_turn( player_activity &act, Character &crafter )
 
     // Base moves for batch size with no speed modifier or assistants
     // Must ensure >= 1 so we don't divide by 0;
-    const double base_total_moves = std::max( 1, rec.batch_time( crafter, craft.charges, 1.0f, 0 ) );
+    const double base_total_moves = std::max( static_cast<int64_t>( 1 ), rec.batch_time( crafter,
+                                    craft.charges, 1.0f, 0 ) );
     // Current expected total moves, includes crafting speed modifiers and assistants
-    const double cur_total_moves = std::max( 1, rec.batch_time( crafter, craft.charges, crafting_speed,
+    const double cur_total_moves = std::max( static_cast<int64_t>( 1 ), rec.batch_time( crafter,
+                                   craft.charges, crafting_speed,
                                    assistants ) );
     // Delta progress in moves adjusted for current crafting speed /
     //crafter.exertion_adjusted_move_multiplier( exertion_level() )
@@ -1740,10 +1788,20 @@ void craft_activity_actor::do_turn( player_activity &act, Character &crafter )
     // This is to ensure we don't over count skill steps
     craft.item_counter = std::min( craft.item_counter, 10'000'000 );
 
-    // Skill and tools are gained/consumed after every 5% progress
+    // This nominal craft time is also how many practice ticks to perform
+    // spread out evenly across the actual duration.
+    const double total_practice_ticks = rec.time_to_craft_moves( crafter,
+                                        recipe_time_flag::ignore_proficiencies ) / 100.0;
+
+    const int ticks_per_practice = 10'000'000.0 / total_practice_ticks;
+    int num_practice_ticks = craft.item_counter / ticks_per_practice -
+                             old_counter / ticks_per_practice;
+    if( num_practice_ticks > 0 ) {
+        crafter.craft_skill_gain( craft, num_practice_ticks );
+    }
+    // Proficiencies and tools are gained/consumed after every 5% progress
     int five_percent_steps = craft.item_counter / 500'000 - old_counter / 500'000;
     if( five_percent_steps > 0 ) {
-        crafter.craft_skill_gain( craft, five_percent_steps );
         // Divide by 100 for seconds, 20 for 5%
         const time_duration pct_time = time_duration::from_seconds( base_total_moves / 2000 );
         crafter.craft_proficiency_gain( craft, pct_time * five_percent_steps );
@@ -2087,7 +2145,7 @@ static void debug_drop_list( const std::vector<drop_or_stash_item_info> &items )
 // Return a list of items to be dropped by the given item-dropping activity in the current turn.
 static std::list<item> obtain_activity_items(
     std::vector<drop_or_stash_item_info> &items,
-    std::vector<item_location> &unhandled_containers,
+    contents_change_handler &handler,
     Character &who )
 {
     std::list<item> res;
@@ -2109,6 +2167,19 @@ static std::list<item> obtain_activity_items(
 
         who.mod_moves( -consumed_moves );
 
+        // If item is inside another (container/pocket), unseal it, and update encumbrance
+        if( loc.has_parent() ) {
+            // Save parent items to be handled when finishing or canceling activity,
+            // in case there are still other items to drop from the same container.
+            // This assumes that an item and any of its parents/ancestors are not
+            // dropped at the same time.
+            handler.unseal_pocket_containing( loc );
+        } else {
+            // when parent's encumbrance cannot be marked as dirty,
+            // mark character's encumbrance as dirty instead (correctness over performance)
+            who.set_check_encumbrance( true );
+        }
+
         // Take off the item or remove it from the player's inventory
         if( who.is_worn( *loc ) ) {
             who.as_player()->takeoff( *loc, &res );
@@ -2117,55 +2188,11 @@ static std::list<item> obtain_activity_items(
         } else {
             res.push_back( who.i_rem( &*loc ) );
         }
-
-        // If item is inside another (container/pocket), unseal it, and update encumbrance
-        if( loc.has_parent() ) {
-            item_location parent = loc.parent_item();
-            item_pocket *const parent_pocket = parent->contained_where( *loc );
-            if( parent_pocket ) {
-                parent_pocket->on_contents_changed();
-            }
-            // Update encumbrance on the parent item
-            parent->on_contents_changed();
-            // Save parent items to be handled when finishing or canceling activity,
-            // in case there are still other items to drop from the same container.
-            // This assumes that an item and any of its parents/ancestors are not
-            // dropped at the same time.
-            if( std::find( unhandled_containers.begin(), unhandled_containers.end(),
-                           parent ) == unhandled_containers.end() ) {
-                unhandled_containers.emplace_back( parent );
-            }
-        } else {
-            // when parent's encumbrance cannot be marked as dirty,
-            // mark character's encumbrance as dirty instead (correctness over performance)
-            who.set_check_encumbrance( true );
-        }
     }
 
     // Remove handled items from activity
     items.erase( items.begin(), it );
-    // And cancel if its empty. If its not, we modified in place and we will continue
-    // to resolve the drop next turn. This is different from the pickup logic which
-    // creates a brand new activity every turn and cancels the old activity
-    if( items.empty() ) {
-        who.cancel_activity();
-    }
-
     return res;
-}
-
-static void handle_containers(
-    std::vector<item_location> &unhandled_containers,
-    Character &who )
-{
-    // some containers could have been destroyed by e.g. monster attack
-    auto it = std::remove_if( unhandled_containers.begin(), unhandled_containers.end(),
-    []( const item_location & loc ) -> bool {
-        return !loc;
-    } );
-    unhandled_containers.erase( it, unhandled_containers.end() );
-    who.handle_contents_changed( unhandled_containers );
-    unhandled_containers.clear();
 }
 
 void drop_or_stash_item_info::serialize( JsonOut &jsout ) const
@@ -2188,20 +2215,26 @@ void drop_activity_actor::do_turn( player_activity &, Character &who )
     const tripoint pos = placement + who.pos();
     who.invalidate_weight_carried_cache();
     put_into_vehicle_or_drop( who, item_drop_reason::deliberate,
-                              obtain_activity_items( items, unhandled_containers, who ),
+                              obtain_activity_items( items, handler, who ),
                               pos, force_ground );
+    // Cancel activity if items is empty. Otherwise, we modified in place and we will continue
+    // to resolve the drop next turn. This is different from the pickup logic which creates
+    // a brand new activity every turn and cancels the old activity
+    if( items.empty() ) {
+        who.cancel_activity();
+    }
 }
 
 void drop_activity_actor::canceled( player_activity &, Character &who )
 {
-    handle_containers( unhandled_containers, who );
+    handler.handle_by( who );
 }
 
 void drop_activity_actor::serialize( JsonOut &jsout ) const
 {
     jsout.start_object();
     jsout.member( "items", items );
-    jsout.member( "unhandled_containers", unhandled_containers );
+    jsout.member( "unhandled_containers", handler );
     jsout.member( "placement", placement );
     jsout.member( "force_ground", force_ground );
     jsout.end_object();
@@ -2213,7 +2246,7 @@ std::unique_ptr<activity_actor> drop_activity_actor::deserialize( JsonIn &jsin )
 
     JsonObject jsobj = jsin.get_object();
     jsobj.read( "items", actor.items );
-    jsobj.read( "unhandled_containers", actor.unhandled_containers );
+    jsobj.read( "unhandled_containers", actor.handler );
     jsobj.read( "placement", actor.placement );
     jsobj.read( "force_ground", actor.force_ground );
 
@@ -2251,8 +2284,11 @@ void stash_activity_actor::do_turn( player_activity &, Character &who )
 
     monster *pet = g->critter_at<monster>( pos );
     if( pet != nullptr && pet->has_effect( effect_pet ) ) {
-        stash_on_pet( obtain_activity_items( items, unhandled_containers, who ),
+        stash_on_pet( obtain_activity_items( items, handler, who ),
                       *pet, who );
+        if( items.empty() ) {
+            who.cancel_activity();
+        }
     } else {
         who.add_msg_if_player( _( "The pet has moved somewhere else." ) );
         who.cancel_activity();
@@ -2261,14 +2297,14 @@ void stash_activity_actor::do_turn( player_activity &, Character &who )
 
 void stash_activity_actor::canceled( player_activity &, Character &who )
 {
-    handle_containers( unhandled_containers, who );
+    handler.handle_by( who );
 }
 
 void stash_activity_actor::serialize( JsonOut &jsout ) const
 {
     jsout.start_object();
     jsout.member( "items", items );
-    jsout.member( "unhandled_containers", unhandled_containers );
+    jsout.member( "unhandled_containers", handler );
     jsout.member( "placement", placement );
     jsout.end_object();
 }
@@ -2279,7 +2315,7 @@ std::unique_ptr<activity_actor> stash_activity_actor::deserialize( JsonIn &jsin 
 
     JsonObject jsobj = jsin.get_object();
     jsobj.read( "items", actor.items );
-    jsobj.read( "unhandled_containers", actor.unhandled_containers );
+    jsobj.read( "unhandled_containers", actor.handler );
     jsobj.read( "placement", actor.placement );
 
     return actor.clone();
@@ -2326,68 +2362,128 @@ std::unique_ptr<activity_actor> move_furniture_activity_actor::deserialize( Json
     return actor.clone();
 }
 
-void burrow_activity_actor::start( player_activity &act, Character &who )
+static int item_move_cost( Character &who, item_location &item )
 {
-    act.moves_total = moves_total;
-    act.moves_left = moves_total;
-    who.add_msg_if_player( _( "You start tearing into the %1$s with your %2$s." ),
-                           here.tername( burrow_position ), burrow_tool );
+    // Cost to take an item from a container or map
+    const int obtain_cost = item.obtain_cost( who );
+    // Cost to move an item to a container, vehicle or the ground
+    const int move_cost = Pickup::cost_to_move_item( who, *item );
+    return obtain_cost + move_cost;
 }
 
-void burrow_activity_actor::do_turn( player_activity &, Character & )
+void insert_item_activity_actor::start( player_activity &act, Character &who )
 {
-    sfx::play_activity_sound( "activity", "burrow", sfx::get_heard_volume( burrow_position ) );
-    if( calendar::once_every( 1_minutes ) ) {
-        sounds::sound( burrow_position, 10, sounds::sound_t::movement,
-                       //~ Sound of a Rat mutant burrowing!
-                       _( "ScratchCrunchScrabbleScurry." ) );
+    if( items.empty() ) {
+        debugmsg( "ACT_INSERT_ITEM was passed an empty list" );
+        act.set_to_null();
     }
 
+    all_pockets_rigid = holster->contents.all_pockets_rigid();
+
+    const int total_moves = item_move_cost( who, items.front().first );
+    act.moves_left = total_moves;
+    act.moves_total = total_moves;
 }
 
-void burrow_activity_actor::finish( player_activity &act, Character &who )
+void insert_item_activity_actor::finish( player_activity &act, Character &who )
 {
+    bool success = false;
+    drop_location &holstered_item = items.front();
+    if( holstered_item.first ) {
+        item &it = *holstered_item.first;
+        if( !it.count_by_charges() ) {
+            if( holster->can_contain( it ) && ( all_pockets_rigid ||
+                                                holster.parents_can_contain_recursive( &it ) ) ) {
 
-    if( here.is_bashable( burrow_position ) && here.has_flag( "SUPPORTS_ROOF", burrow_position ) &&
-        here.ter( burrow_position ) != t_tree ) {
-        // Tunneling through solid rock is hungry, sweaty, tiring, backbreaking work
-        // Not quite as bad as the pickaxe, though
-        who.mod_stored_nutr( 10 );
-        who.mod_thirst( 10 );
-        who.mod_fatigue( 15 );
-        who.mod_pain( 3 * rng( 1, 3 ) );
-    } else if( here.move_cost( burrow_position ) == 2 && here.get_abs_sub().z == 0 &&
-               here.ter( burrow_position ) != t_dirt && here.ter( burrow_position ) != t_grass ) {
-        //Breaking up concrete on the surface? not nearly as bad
-        who.mod_stored_nutr( 5 );
-        who.mod_thirst( 5 );
-        who.mod_fatigue( 10 );
+                success = holster->put_in( it, item_pocket::pocket_type::CONTAINER,
+                                           /*unseal_pockets=*/true ).success();
+                if( success ) {
+                    //~ %1$s: item to put in the container, %2$s: container to put item in
+                    who.add_msg_if_player( string_format( _( "You put your %1$s into the %2$s." ),
+                                                          holstered_item.first->display_name(), holster->type->nname( 1 ) ) );
+                    handler.add_unsealed( holster );
+                    handler.unseal_pocket_containing( holstered_item.first );
+                    holstered_item.first.remove_item();
+                }
+
+            }
+        } else {
+            int charges = all_pockets_rigid ? holstered_item.second : std::min( holstered_item.second,
+                          holster.max_charges_by_parent_recursive( it ) );
+
+            if( charges > 0 && holster->can_contain_partial( it ) ) {
+                int result = holster->fill_with( it, charges,
+                                                 /*unseal_pockets=*/true,
+                                                 /*allow_sealed=*/true );
+                success = result > 0;
+
+                if( success ) {
+                    item copy( it );
+                    copy.charges = result;
+                    //~ %1$s: item to put in the container, %2$s: container to put item in
+                    who.add_msg_if_player( string_format( _( "You put your %1$s into the %2$s." ),
+                                                          copy.display_name(), holster->type->nname( 1 ) ) );
+                    handler.add_unsealed( holster );
+                    handler.unseal_pocket_containing( holstered_item.first );
+                    it.charges -= result;
+                    if( it.charges == 0 ) {
+                        holstered_item.first.remove_item();
+                    }
+                }
+            }
+        }
+
+        if( !success ) {
+            who.add_msg_if_player(
+                string_format(
+                    _( "Could not put %1$s into %2$s, aborting." ),
+                    it.tname(), holster->tname() ) );
+        }
+    } else {
+        // item was lost, so just go to next item
+        success = true;
     }
-    who.add_msg_if_player( m_good, _( "You finish burrowing." ) );
-    here.destroy( burrow_position, true );
 
-    act.set_to_null();
+    items.pop_front();
+    if( items.empty() || !success ) {
+        handler.handle_by( who );
+        act.set_to_null();
+        return;
+    }
+
+    // Restart the activity
+    const int total_moves = item_move_cost( who, items.front().first );
+    act.moves_left = total_moves;
+    act.moves_total = total_moves;
 }
 
-void burrow_activity_actor::serialize( JsonOut &jsout ) const
+void insert_item_activity_actor::canceled( player_activity &/*act*/, Character &who )
+{
+    handler.handle_by( who );
+}
+
+void insert_item_activity_actor::serialize( JsonOut &jsout ) const
 {
     jsout.start_object();
 
-    jsout.member( "moves_total", moves_total );
-    jsout.member( "burrow_position", burrow_position );
-    jsout.member( "burrow_tool", burrow_tool );
+    jsout.member( "holster", holster );
+    jsout.member( "items", items );
+    jsout.member( "handler", handler );
+    jsout.member( "all_pockets_rigid", all_pockets_rigid );
 
     jsout.end_object();
 }
 
-std::unique_ptr<activity_actor> burrow_activity_actor::deserialize( JsonIn &jsin )
+std::unique_ptr<activity_actor> insert_item_activity_actor::deserialize( JsonIn &jsin )
 {
-    burrow_activity_actor actor {};
+    insert_item_activity_actor actor;
 
     JsonObject data = jsin.get_object();
-    data.read( "moves_total", actor.moves_total );
-    data.read( "burrow_position", actor.burrow_position );
-    data.read( "burrow_tool", actor.burrow_tool );
+
+    data.read( "holster", actor.holster );
+    data.read( "items", actor.items );
+    data.read( "handler", actor.handler );
+    data.read( "all_pockets_rigid", actor.all_pockets_rigid );
 
     return actor.clone();
 }
@@ -2591,7 +2687,6 @@ std::unique_ptr<activity_actor> milk_activity_actor::deserialize( JsonIn &jsin )
     data.read( "monster_coords", actor.monster_coords );
     data.read( "string_values", actor.string_values );
 
-
     return actor.clone();
 }
 
@@ -2692,7 +2787,6 @@ const std::unordered_map<activity_id, std::unique_ptr<activity_actor>( * )( Json
 deserialize_functions = {
     { activity_id( "ACT_AIM" ), &aim_activity_actor::deserialize },
     { activity_id( "ACT_AUTODRIVE" ), &autodrive_activity_actor::deserialize },
-    { activity_id( "ACT_BURROW" ), &burrow_activity_actor::deserialize },
     { activity_id( "ACT_CONSUME" ), &consume_activity_actor::deserialize },
     { activity_id( "ACT_CRAFT" ), &craft_activity_actor::deserialize },
     { activity_id( "ACT_DIG" ), &dig_activity_actor::deserialize },
@@ -2702,6 +2796,7 @@ deserialize_functions = {
     { activity_id( "ACT_GUNMOD_REMOVE" ), &gunmod_remove_activity_actor::deserialize },
     { activity_id( "ACT_HACKING" ), &hacking_activity_actor::deserialize },
     { activity_id( "ACT_HOTWIRE_CAR" ), &hotwire_car_activity_actor::deserialize },
+    { activity_id( "ACT_INSERT_ITEM" ), &insert_item_activity_actor::deserialize },
     { activity_id( "ACT_LOCKPICK" ), &lockpick_activity_actor::deserialize },
     { activity_id( "ACT_MIGRATION_CANCEL" ), &migration_cancel_activity_actor::deserialize },
     { activity_id( "ACT_MILK" ), &milk_activity_actor::deserialize },

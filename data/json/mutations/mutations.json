@@ -22,6 +22,7 @@
     "hunger": true,
     "encumbrance_covered": [ [ "head", 5 ] ],
     "changes_to": [ "BIOLUM1" ],
+    "types": [ "BIOLUM" ],
     "category": [ "ELFA", "INSECT", "FISH" ],
     "triggers": [
       [
@@ -71,6 +72,7 @@
     "time": 810000,
     "hunger": true,
     "encumbrance_covered": [ [ "head", 5 ] ],
+    "types": [ "BIOLUM" ],
     "prereqs": [ "BIOLUM0" ],
     "changes_to": [ "BIOLUM2" ],
     "transform": { "target": "BIOLUM1_active", "msg_transform": "Your photophore starts glowing.", "active": true, "moves": 10 },
@@ -97,6 +99,7 @@
     "time": 405000,
     "hunger": true,
     "encumbrance_covered": [ [ "head", 5 ] ],
+    "types": [ "BIOLUM" ],
     "prereqs": [ "BIOLUM1" ],
     "category": [ "ELFA", "INSECT", "FISH" ],
     "transform": { "target": "BIOLUM2_active", "msg_transform": "Your photophore starts glowing.", "active": true, "moves": 10 }
@@ -346,7 +349,7 @@
     "description": "Your system is rather tolerant of poisons and toxins, and most will affect you less.",
     "starting_trait": true,
     "leads_to": [ "EATPOISON" ],
-    "category": [ "INSECT", "SLIME", "SPIDER", "MEDICAL" ]
+    "category": [ "INSECT", "SLIME", "SPIDER", "MEDICAL", "CEPHALOPOD" ]
   },
   {
     "type": "mutation",
@@ -1035,7 +1038,8 @@
     "starting_trait": true,
     "prereqs": [ "BADHEARING" ],
     "cancels": [ "GOODHEARING" ],
-    "hearing_modifier": 0.0
+    "hearing_modifier": 0.0,
+    "flags": [ "DEAF" ]
   },
   {
     "type": "mutation",
@@ -1521,6 +1525,7 @@
     "description": "Your eyes still bulge, yet your pupils look different somehow.  Water doesn't seem to cause any trouble at all, though.",
     "leads_to": [ "CEPH_VISION" ],
     "cancels": [ "BIRD_EYE", "LIZ_EYE", "FEL_EYE", "URSINE_EYE", "COMPOUND_EYES", "ELFAEYES" ],
+    "flags": [ "EYE_MEMBRANE" ],
     "category": [ "CEPHALOPOD" ]
   },
   {
@@ -1637,6 +1642,7 @@
     "name": { "str": "Infrared Vision" },
     "points": 5,
     "description": "Your eyes have mutated to pick up radiation in the infrared spectrum.",
+    "flags": [ "INFRARED" ],
     "prereqs": [ "NIGHTVISION3" ],
     "cancels": [ "LIZ_IR" ],
     "category": [ "INSECT", "TROGLOBITE", "SPIDER" ]
@@ -1660,6 +1666,7 @@
     "name": { "str": "Reptilian IR" },
     "points": 5,
     "description": "Your optic nerves and brain have mutated to catch up with your eyes, allowing you to see in the infrared spectrum.",
+    "flags": [ "INFRARED" ],
     "prereqs": [ "LIZ_EYE" ],
     "cancels": [ "ELFA_NV", "ELFA_FNV", "FEL_NV", "INFRARED" ],
     "category": [ "LIZARD", "RAPTOR" ]
@@ -1810,6 +1817,7 @@
     "description": "You have a set of clear lenses which lower over your eyes while underwater, allowing you to see as though you were wearing goggles.  Slightly decreases wet penalties.",
     "prereqs": [ "EYEBULGE" ],
     "category": [ "LIZARD", "FISH" ],
+    "flags": [ "EYE_MEMBRANE" ],
     "wet_protection": [ { "part": "eyes", "neutral": 1 } ]
   },
   {
@@ -1881,6 +1889,7 @@
     "description": "We have spliced the dense, amphibole fibers from Mycus core towers with the resilient, adaptive flesh of local physiology.  This reduces our speed by a moderate amount, but provides powerful armor across our body, nullifies wet effects, and provides complete protection from fire.",
     "valid": false,
     "purifiable": false,
+    "flags": [ "HEATPROOF" ],
     "category": [ "MYCUS" ],
     "prereqs": [ "M_SKIN" ],
     "prereqs2": [ "M_DEFENDER" ],
@@ -1917,6 +1926,7 @@
     "description": "Local physiology has been fully incorporated with that of Mycus silicate fibers.  In addition to benefits conferred by previous developments, we may join with Mycus fibers beneath us - sleeping on top of fungal areas places us into a dormant state, which spreads spores around us as we sleep and revitalizes our body much more quickly than regular sleep.",
     "valid": false,
     "purifiable": false,
+    "flags": [ "HEATPROOF" ],
     "category": [ "MYCUS" ],
     "prereqs": [ "M_SKIN2" ],
     "threshreq": [ "THRESH_MYCUS" ],
@@ -2042,6 +2052,7 @@
     "id": "LIGHT_BONES",
     "name": { "str": "Light Bones" },
     "points": 2,
+    "mixed_effect": true,
     "description": "Your bones are very light.  This enables you to move and attack 10% faster, but also reduces your carrying weight by 20% and makes bashing attacks hurt a little more.",
     "category": [ "MOUSE" ],
     "changes_to": [ "HOLLOW_BONES" ],
@@ -2951,6 +2962,7 @@
     "description": "Your body is unusually inhospitable to parasitic lifeforms.  You will never become infested with internal parasites.",
     "prereqs": [ "DISRESISTANT" ],
     "prereqs2": [ "INFRESIST" ],
+    "flags": [ "PARAIMMUNE" ],
     "category": [ "ELFA", "CHIMERA", "MEDICAL", "SLIME" ]
   },
   {
@@ -2962,7 +2974,7 @@
     "prereqs": [ "POISRESIST" ],
     "leads_to": [ "EATPOISON" ],
     "changes_to": [ "POISONOUS2" ],
-    "category": [ "SLIME", "TROGLOBITE", "SPIDER" ]
+    "category": [ "SLIME", "TROGLOBITE", "SPIDER", "CEPHALOPOD" ]
   },
   {
     "type": "mutation",
@@ -3140,7 +3152,8 @@
     "name": { "str": "Saprovore" },
     "points": 2,
     "description": "Your digestive system is specialized to allow you to consume decaying material.  You can eat rotten food, albeit for less nutrition than usual.",
-    "category": [ "TROGLOBITE", "CHIMERA" ]
+    "category": [ "TROGLOBITE", "CHIMERA" ],
+    "flags": [ "IMMUNE_SPOIL" ]
   },
   {
     "type": "mutation",
@@ -3155,7 +3168,8 @@
     "threshreq": [ "THRESH_PLANT" ],
     "cancels": [ "GRAZER" ],
     "leads_to": [ "CHLOROMORPH" ],
-    "category": [ "PLANT" ]
+    "category": [ "PLANT" ],
+    "flags": [ "IMMUNE_SPOIL" ]
   },
   {
     "type": "mutation",
@@ -3234,6 +3248,7 @@
     "threshreq": [ "THRESH_CHIMERA", "THRESH_RAT", "THRESH_MOUSE" ],
     "cancels": [ "VEGETARIAN", "HERBIVORE", "RUMINANT", "GRAZER" ],
     "category": [ "RAT", "CHIMERA", "MOUSE" ],
+    "flags": [ "IMMUNE_SPOIL" ],
     "valid": false
   },
   {
@@ -3245,10 +3260,9 @@
     "valid": false,
     "purifiable": false,
     "description": "Between your claws and teeth, you can tunnel through just about anything.",
-    "prereqs": [ "CLAWS_ST" ],
-    "prereqs2": [ "INCISORS" ],
-    "threshreq": [ "THRESH_RAT" ],
-    "category": [ "RAT" ],
+    "prereqs": [ "CLAWS_ST", "PAWS", "PAWS_LARGE" ],
+    "threshreq": [ "THRESH_RAT", "THRESH_LUPINE", "THRESH_URSINE" ],
+    "category": [ "RAT", "LUPINE", "URSINE" ],
     "active": true
   },
   {
@@ -4512,6 +4526,7 @@
     "prereqs2": [ "AMORPHOUS" ],
     "threshreq": [ "THRESH_SLIME" ],
     "category": [ "SLIME" ],
+    "flags": [ "EYE_MEMBRANE" ],
     "passive_mods": { "per_mod": 5 }
   },
   {
@@ -4643,7 +4658,7 @@
     "ugliness": 6,
     "description": "Skin tabs and odd flaps of skin surround your mouth.  They don't affect your eating, but are unpleasant to look at.",
     "category": [ "CHIMERA" ],
-    "leads_to": [ "MOUTH_TENTACLES", "MANDIBLES" ]
+    "changes_to": [ "MOUTH_TENTACLES", "MANDIBLES" ]
   },
   {
     "type": "mutation",
@@ -5056,10 +5071,11 @@
     "id": "NO_THIRST",
     "name": { "str": "Metabolic Rehydration" },
     "points": 6,
-    "description": "Your body gets everything it needs from the food that you eat!  You no longer gain hydration from fluids - instead, your thirst will be equal to, and change with, your hunger.",
+    "description": "Your body gets everything it needs from the food that you eat!  You no longer need hydration from fluids.",
     "threshreq": [ "THRESH_MOUSE" ],
     "category": [ "MOUSE" ],
     "cancels": [ "THIRST", "THIRST2", "THIRST3" ],
+    "flags": [ "NO_THIRST" ],
     "purifiable": false
   },
   {
@@ -5818,7 +5834,6 @@
     "types": [ "HANDS" ],
     "changes_to": [ "INSECT_ARMS_OK", "ARACHNID_ARMS" ],
     "prereqs": [ "CHITIN", "CHITIN2", "CHITIN3", "CHITIN_FUR2", "CHITIN_FUR3" ],
-    "prereqs2": [ "ANTENNAE" ],
     "threshreq": [ "THRESH_INSECT", "THRESH_SPIDER" ],
     "category": [ "INSECT", "SPIDER" ],
     "restricts_gear": [ "torso" ],
@@ -6304,6 +6319,7 @@
     "id": "ACIDPROOF",
     "name": { "str": "Acidproof" },
     "points": 3,
+    "flags": [ "ACID_IMMUNE" ],
     "description": "Your mutated flesh is immune to the damaging effects of acid.",
     "threshreq": [ "THRESH_INSECT", "THRESH_CHIMERA", "THRESH_MEDICAL", "THRESH_SLIME" ],
     "category": [ "INSECT", "CHIMERA", "MEDICAL", "SLIME" ]
@@ -6348,6 +6364,7 @@
     "category": [ "FISH" ],
     "threshreq": [ "THRESH_FISH" ],
     "armor": [ { "parts": "eyes", "cut": 3, "bash": 1 } ],
+    "flags": [ "EYE_MEMBRANE" ],
     "active": true
   },
   {
@@ -6695,22 +6712,22 @@
   },
   {
     "type": "mutation",
-    "id": "DEBUG_CLAIRVOYANCE",
+    "id": "DEBUG_CLAIRVOYANCE_PLUS",
     "name": { "str": "Debug Clairvoyance" },
     "points": 99,
     "valid": false,
     "description": "You can clearly see that this is for dev purposes only.",
-    "flags": [ "SUPER_CLAIRVOYANCE" ],
+    "flags": [ "CLAIRVOYANCE_PLUS" ],
     "debug": true
   },
   {
     "type": "mutation",
-    "id": "DEBUG_CLAIRVOYANCE_PLUS",
-    "name": { "str": "Debug Clairvoyance Plus" },
+    "id": "DEBUG_CLAIRVOYANCE",
+    "name": { "str": "Debug Clairvoyance Super" },
     "points": 99,
     "valid": false,
-    "description": "You can clearly see that this is for dev purposes only.",
-    "flags": [ "CLAIRVOYANCE_PLUS" ],
+    "description": "You can see all the bugs with this one.",
+    "flags": [ "SUPER_CLAIRVOYANCE" ],
     "debug": true
   },
   {
@@ -6738,7 +6755,8 @@
     "points": 99,
     "valid": false,
     "description": "Smell that bug?  Smell's certainly not coming from you!",
-    "debug": true
+    "debug": true,
+    "flags": [ "NO_SCENT" ]
   },
   {
     "type": "mutation",
@@ -6774,6 +6792,15 @@
     "points": 99,
     "valid": false,
     "description": "Crafting and construction requirements bugger off with this one.  Apply with care.",
+    "debug": true
+  },
+  {
+    "type": "mutation",
+    "id": "DEBUG_CNF",
+    "name": { "str": "Debug Crafting Virtuoso" },
+    "points": 99,
+    "valid": false,
+    "description": "Crafting failures won't bug you any more.",
     "debug": true
   },
   {

@@ -6,25 +6,22 @@
 #include <climits>
 #include <cstddef>
 #include <functional>
+#include <iosfwd>
 #include <map>
+#include <new>
 #include <set>
-#include <string>
 #include <utility>
 #include <vector>
 
-#include "bodypart.h"
 #include "calendar.h"
 #include "character_id.h"
 #include "color.h"
 #include "creature.h"
-#include "cursesdef.h"
 #include "damage.h"
-#include "effect_source.h"
 #include "enums.h"
 #include "item.h"
 #include "mtype.h"
 #include "optional.h"
-#include "pldata.h"
 #include "point.h"
 #include "type_id.h"
 #include "units_fwd.h"
@@ -35,7 +32,12 @@ class JsonIn;
 class JsonObject;
 class JsonOut;
 class effect;
+class effect_source;
 class player;
+namespace catacurses
+{
+class window;
+}  // namespace catacurses
 struct dealt_projectile_attack;
 struct pathfinding_settings;
 struct trap;
@@ -85,7 +87,7 @@ class monster : public Creature
         friend class editmap;
     public:
         monster();
-        monster( const mtype_id &id );
+        explicit monster( const mtype_id &id );
         monster( const mtype_id &id, const tripoint &pos );
         monster( const monster & );
         monster( monster && );
@@ -104,7 +106,7 @@ class monster : public Creature
         }
 
         void poly( const mtype_id &id );
-        bool can_upgrade();
+        bool can_upgrade() const;
         void hasten_upgrade();
         int get_upgrade_time() const;
         void allow_upgrade();
@@ -313,8 +315,8 @@ class monster : public Creature
 
         void absorb_hit( const bodypart_id &bp, damage_instance &dam ) override;
         bool block_hit( Creature *source, bodypart_id &bp_hit, damage_instance &d ) override;
-        void melee_attack( Creature &target );
-        void melee_attack( Creature &target, float accuracy );
+        bool melee_attack( Creature &target );
+        bool melee_attack( Creature &target, float accuracy );
         void melee_attack( Creature &p, bool ) = delete;
         void deal_projectile_attack( Creature *source, dealt_projectile_attack &attack,
                                      bool print_messages = true ) override;
@@ -366,7 +368,7 @@ class monster : public Creature
         float  get_dodge() const override;       // Natural dodge, or 0 if we're occupied
         float  get_melee() const override; // For determining attack skill when awarding dodge practice.
         float  hit_roll() const override;  // For the purposes of comparing to player::dodge_roll()
-        float  dodge_roll() override;  // For the purposes of comparing to player::hit_roll()
+        float  dodge_roll() const override;  // For the purposes of comparing to player::hit_roll()
 
         int get_grab_strength() const; // intensity of grabbed effect
 
@@ -525,7 +527,6 @@ class monster : public Creature
          */
         void init_from_item( const item &itm );
 
-        time_point last_updated = calendar::turn_zero;
         /**
          * Do some cleanup and caching as monster is being unloaded from map.
          */
