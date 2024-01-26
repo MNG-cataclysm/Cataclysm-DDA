@@ -216,11 +216,18 @@
     "id": "MISSION_RANCH_FOREMAN_2",
     "type": "mission_definition",
     "name": { "str": "Find 25 Blankets" },
-    "goal": "MGOAL_FIND_ITEM",
+    "goal": "MGOAL_CONDITION",
     "difficulty": 5,
     "value": 50000,
-    "item": "blanket",
-    "count": 25,
+    "goal_condition": {
+      "or": [
+        { "u_has_items": { "item": "blanket", "count": 25 } },
+        { "u_has_items": { "item": "fur_blanket", "count": 25 } },
+        { "u_has_items": { "item": "electric_blanket", "count": 25 } },
+        { "u_has_items": { "item": "quilt", "count": 25 } },
+        { "u_has_items": { "item": "quilt_patchwork", "count": 25 } }
+      ]
+    },
     "origins": [ "ORIGIN_SECONDARY" ],
     "followup": "MISSION_RANCH_FOREMAN_3",
     "dialogue": {
