@@ -73,6 +73,7 @@ if (TILES)
                 ${THIRD_PARTY_SOURCE_DIR}/imgui/imstb_rectpack.h
                 ${THIRD_PARTY_SOURCE_DIR}/imgui/imstb_textedit.h
                 ${THIRD_PARTY_SOURCE_DIR}/imgui/imstb_truetype.h
+                ${THIRD_PARTY_SOURCE_DIR}/imgui/imgui_demo.cpp
                 ${THIRD_PARTY_SOURCE_DIR}/imgui/imgui_draw.cpp
                 ${THIRD_PARTY_SOURCE_DIR}/imgui/imgui_tables.cpp
                 ${THIRD_PARTY_SOURCE_DIR}/imgui/imgui_widgets.cpp
@@ -103,7 +104,7 @@ if (TILES)
                 -w
                 )
 
-        add_definitions(-DIMGUI_DISABLE_OBSOLETE_KEYIO)
+        target_compile_definitions(imgui PUBLIC IMGUI_DISABLE_OBSOLETE_KEYIO)
 
         if (NOT DYNAMIC_LINKING)
             target_link_libraries(imgui PUBLIC
@@ -134,6 +135,7 @@ if (CURSES)
                 ${THIRD_PARTY_SOURCE_DIR}/imgui/imstb_rectpack.h
                 ${THIRD_PARTY_SOURCE_DIR}/imgui/imstb_textedit.h
                 ${THIRD_PARTY_SOURCE_DIR}/imgui/imstb_truetype.h
+                ${THIRD_PARTY_SOURCE_DIR}/imgui/imgui_demo.cpp
                 ${THIRD_PARTY_SOURCE_DIR}/imgui/imgui_draw.cpp
                 ${THIRD_PARTY_SOURCE_DIR}/imgui/imgui_tables.cpp
                 ${THIRD_PARTY_SOURCE_DIR}/imgui/imgui_widgets.cpp

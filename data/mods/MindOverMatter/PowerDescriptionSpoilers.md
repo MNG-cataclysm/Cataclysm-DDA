@@ -268,6 +268,15 @@ This is natural painkiller and so has natural effects (reduces speed slightly)<b
 *Effects*: The psion prevents anything from interfering with their senses, becoming immune to being Dazed, Stunned (either physically or psionically), blinded, made to hallucinate, deafened, Blinding Venom, and also cannot get high or drunk.<br />
 *Prerequisites*: Night Eyes 10, Speed Reader 8 *or* Aura Sight 8 *or* Combat Sense 5<br />
 
+## Astral Projection
+*Difficulty*: 8<br />
+*Target*: Self<br />
+*Duration*: Indefinite<br />
+*Stamina Cost*: 5000, minus 125 per level to a minimum of 2000<br />
+*Channeling Time*: 60 seconds<br />
+*Effects*: The psion casts their spirit forth, wandering disembodied. While in spirit form they are invisible and intangible, move extremely quickly, and can pass through walls. However, they do not regenerate stamina and every step costs 75 stamina (minus 3 times the power level, to a minimum of 25). When stamina reaches 0, or at any time by using the appropriate power, the psion may return to their body.<br />
+*Prerequisites*: Clarity 6 and Clairvoyance 9 *or* Satellite View 8 and Clairvoyance 9<br />
+
 ## Prescient Tactician (C)
 *Difficulty*: 9<br />
 *Target*: All allies within 20 squares<br />
@@ -723,21 +732,30 @@ Powers causing telekinetic damage have a 40% chance to stagger the target for 2 
 
 ## Far Hand 
 *Difficulty*: 1<br />
-*Target*: One enemy, ally, or the items in a space up to 3 squares away plus 0.9 squares per power level<br />
+*Target*: One the items in a space up to 3 squares away plus 0.9 squares per power level<br />
 *Duration*: Instant<br />
-*Stamina Cost*: 1750, minus 80 per level to a minimum of 750<br />
+*Stamina Cost*: 1250, minus 80 per level to a minimum of 500<br />
 *Channeling Time*: 50 moves, minus 4 moves per level to a minimum of 10<br />
-*Effects*: The psion reaches out and pulls the target toward them, moving it 1 to 6 squares closer plus 0.5 to 1.5 squares per power level.<br />
+*Effects*: The psion reaches out and pulls a set of items toward or away from them, moving it 1 to 4 squares plus 0.4 to 0.9 squares per power level.<br />
 *Prerequisites*: Starting power<br />
 
 ## Force Shove 
 *Difficulty*: 1<br />
-*Target*: One enemy, ally, or the items in a space up to 1 square away plus 0.9 squares per power level<br />
+*Target*: One enemy, ally, or the items in a space up to 2 squares away plus 0.9 squares per power level<br />
 *Duration*: Instant<br />
 *Stamina Cost*: 1750, minus 80 per level to a minimum of 750<br />
 *Channeling Time*: 50 moves, minus 4 moves per level to a minimum of 10<br />
-*Effects*: The psion shoves a single target away, moving it 2 to 4 squares plus 0.5 to 1 squares per power level.<br />
+*Effects*: The psion attempts to shove a single target either toward or away from them. The distance is based on the ratio of the target's weight to the psion's power level (modified by Intelligence and Nether Attunement as usual).  By default, the formula is (power level * 25 kg) * Intelligence modifier * Nether Attunement modifier, divided by the target's weight in kg. If this is 1 or higher, the target is hurled back 1 square for everyone 0.5 above 1 the ratio is. If it is below one, there is still a chance to knock the target over (chance is weight ratio * 100 in percentage; a weight ratio of 0.9 has a 90% chance of causing knockdown).<br />
 *Prerequisites*: Starting power<br />
+
+## Noisemaker
+*Difficulty*: 2<br />
+*Target*: One target within to 2 squares away plus 0.9 squares per power level<br />
+*Duration*: Instant<br />
+*Stamina Cost*: 1750, minus 85 per level to a minimum of 450<br />
+*Channeling Time*: 64 moves, minus 4 moves per level to a minimum of 15<br />
+*Effects*: Thump the ground with telekinetic force, causing 3 to 8 noise plus 0.5 to 1.5 noise per power level.<br />
+*Prerequisites*: None<br />
 
 ## Knockdown
 *Difficulty*: 2<br />
@@ -1052,7 +1070,7 @@ Powers causing telepathic damage have a 5% chance to down the target, a 33% chan
 *Duration*: Instant<br />
 *Stamina Cost*: 7500, minus 170 per level to a minimum of 4600<br />
 *Channeling Time*: 150 moves, minus 5.5 moves per level to a minimum of 75<br />
-*Effects*: Teleports a single monster somewhere *else*, removing them and anything they might drop. The monster must have HP lower than 15 to 350, plus 15 to 35 per power level, randomly determined when the power is used.  Oubliette cannot currently affect NPCs.<br />
+*Effects*: Teleports a single target somewhere *else*, removing them and anything they might drop. The target must have HP lower than 15 to 350, plus 15 to 35 per power level, randomly determined when the power is used.  For this purpose, NPC health is calculated as the sum total of their limb health, divided by 3.<br />
 *Prerequisites*: Displacement 10, Farstep 6 *or* Transposition 8 *or * Spacial Vortex 8<br />
 
 ## Gateway 
@@ -1092,7 +1110,7 @@ Powers causing telepathic damage have a 5% chance to down the target, a 33% chan
 *Duration*: 4 minutes and 50 seconds to 19 minutes and 34 seconds, plus 18 seconds to 2 minutes and 43 seconds per power level<br />
 *Stamina Cost*: 2500, minus 95 per level to a minimum of 1250<br />
 *Channeling Time*: 200 moves, minus 6.5 moves per level to a minimum of 50<br />
-*Effects*: Increases the coagulation rate of blood, slowing bleeding.  From level 1 through 7, bleeding is slowed by a third. From level 8 through 15, bleeding is slowed by two thirds. At level 16 or above, bleeding is slowed by two thirds, or prevented entirely if inflicted when the power is active.<br />
+*Effects*: Increases the coagulation rate of blood, slowing bleeding.  From level 1 through 7, bleeding is slowed by a third. From level 8 through 15, bleeding is slowed by two thirds. At level 16 or above, bleeding is slowed by two thirds, or prevented entirely if inflicted when the power is active. In addition, all power levels increase the effectiveness of any attempt to stop bleeding by 15%, plus 5% per power level.<br />
 *Prerequisites*: Starting power<br />
 
 ## Staunch Wound
@@ -1172,8 +1190,8 @@ Powers causing telepathic damage have a 5% chance to down the target, a 33% chan
 *Target*: Self<br />
 *Duration*: Instant<br />
 *Stamina Cost*: 8000<br />
-*Channeling Time*: 1 hour<br />
-*Effects*: Sink deep into meditation and increase the speed of healing hundreds of times. When the channeling time ends, the psion heals from 3 to 8 damage to every body part, plus 0.5 to 2 per power level.<br />
+*Channeling Time*: 5 seconds<br />
+*Effects*: Sink deep into meditation and greatly increase healing speed. While meditating, the psion heals 4 times faster, plus 0.75 times per power level. In addition, broken limbs heal 2 times faster, plus 0.25 times per power level.<br />
 *Prerequisites*: Damage Balancing 6, Allay Infection 5<br />
 
 ## Lacerating Touch 

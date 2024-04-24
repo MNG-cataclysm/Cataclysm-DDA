@@ -1,8 +1,11 @@
 #include "flag.h"
 
 #include "debug.h"
+#include "flexbuffer_json-inl.h"
+#include "flexbuffer_json.h"
 #include "generic_factory.h"
-#include "json.h"
+#include "init.h"
+#include "json_error.h"
 #include "type_id.h"
 
 const flag_id flag_ABLATIVE_LARGE( "ABLATIVE_LARGE" );
@@ -56,7 +59,6 @@ const flag_id flag_BYPRODUCT( "BYPRODUCT" );
 const flag_id flag_CABLE_SPOOL( "CABLE_SPOOL" );
 const flag_id flag_CAMERA_PRO( "CAMERA_PRO" );
 const flag_id flag_CANNIBAL( "CANNIBAL" );
-const flag_id flag_CANNIBALISM( "CANNIBALISM" );
 const flag_id flag_CANT_HEAL_EVERYONE( "CANT_HEAL_EVERYONE" );
 const flag_id flag_CANT_WEAR( "CANT_WEAR" );
 const flag_id flag_CARNIVORE_OK( "CARNIVORE_OK" );
@@ -95,6 +97,7 @@ const flag_id flag_EATEN_COLD( "EATEN_COLD" );
 const flag_id flag_EATEN_HOT( "EATEN_HOT" );
 const flag_id flag_EDIBLE_FROZEN( "EDIBLE_FROZEN" );
 const flag_id flag_EFFECT_IMPEDING( "EFFECT_IMPEDING" );
+const flag_id flag_EFFECT_LIMB_DISABLE_CONDITIONAL_FLAGS( "EFFECT_LIMB_DISABLE_CONDITIONAL_FLAGS" );
 const flag_id flag_EFFECT_LIMB_SCORE_MOD( "EFFECT_LIMB_SCORE_MOD" );
 const flag_id flag_EFFECT_LIMB_SCORE_MOD_LOCAL( "EFFECT_LIMB_SCORE_MOD_LOCAL" );
 const flag_id flag_ELECTRIC_IMMUNE( "ELECTRIC_IMMUNE" );

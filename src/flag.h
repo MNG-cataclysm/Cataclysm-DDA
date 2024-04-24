@@ -2,12 +2,13 @@
 #ifndef CATA_SRC_FLAG_H
 #define CATA_SRC_FLAG_H
 
-#include <iosfwd>
 #include <set>
 #include <string>
+#include <string_view>
+#include <utility>
 #include <vector>
 
-#include "translations.h"
+#include "translation.h"
 #include "type_id.h"
 
 class JsonObject;
@@ -66,7 +67,6 @@ extern const flag_id flag_BYPRODUCT;
 extern const flag_id flag_CABLE_SPOOL;
 extern const flag_id flag_CAMERA_PRO;
 extern const flag_id flag_CANNIBAL;
-extern const flag_id flag_CANNIBALISM;
 extern const flag_id flag_CANT_HEAL_EVERYONE;
 extern const flag_id flag_CANT_WEAR;
 extern const flag_id flag_CARNIVORE_OK;
@@ -105,6 +105,7 @@ extern const flag_id flag_EATEN_COLD;
 extern const flag_id flag_EATEN_HOT;
 extern const flag_id flag_EDIBLE_FROZEN;
 extern const flag_id flag_EFFECT_IMPEDING;
+extern const flag_id flag_EFFECT_LIMB_DISABLE_CONDITIONAL_FLAGS;
 extern const flag_id flag_EFFECT_LIMB_SCORE_MOD;
 extern const flag_id flag_EFFECT_LIMB_SCORE_MOD_LOCAL;
 extern const flag_id flag_ELECTRIC_IMMUNE;
