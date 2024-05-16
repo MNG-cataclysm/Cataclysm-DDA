@@ -47,6 +47,7 @@
     "families": [ "prof_intro_biology", "prof_physiology", "prof_wp_cyborg" ],
     "harvest": "mon_zomborg",
     "dissect": "dissect_mon_zomborg",
+    "path_settings": { "avoid_traps": true },
     "armor": { "bash": 6, "cut": 28, "bullet": 16 },
     "flags": [ "SEES", "HEARS", "WARM", "BASHES", "GROUP_BASH", "PATH_AVOID_DANGER_1", "PUSH_MON" ]
   },
@@ -61,6 +62,7 @@
     "dodge": 8,
     "melee_dice": 3,
     "starting_ammo": { "bone_dart": 20 },
+    "path_settings": { "avoid_traps": true },
     "special_attacks": [
       {
         "type": "gun",
@@ -150,7 +152,6 @@
     "revert_to_itype": "e_scrap",
     "anger_triggers": [ "FRIEND_ATTACKED", "FRIEND_DIED", "HURT" ],
     "death_drops": { "subtype": "collection", "groups": [ [ "robots", 80 ] ] },
-    "death_function": { "corpse_type": "BROKEN" },
     "flags": [ "SEES", "HEARS", "GOODHEARING", "PATH_AVOID_DANGER_1", "PRIORITIZE_TARGETS" ],
     "armor": { "bash": 32, "cut": 28, "acid": 12, "heat": 8, "bullet": 35 }
   }
