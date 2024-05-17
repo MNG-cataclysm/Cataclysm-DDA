@@ -47,8 +47,8 @@
     "families": [ "prof_intro_biology", "prof_physiology", "prof_wp_cyborg" ],
     "harvest": "mon_zomborg",
     "dissect": "dissect_mon_zomborg",
-    "path_settings": { "avoid_traps": true },
     "armor": { "bash": 6, "cut": 28, "bullet": 16 },
+    "path_settings": { "avoid_traps": true },
     "flags": [ "SEES", "HEARS", "WARM", "BASHES", "GROUP_BASH", "PATH_AVOID_DANGER_1", "PUSH_MON" ]
   },
   {
