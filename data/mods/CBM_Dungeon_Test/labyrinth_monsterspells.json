@@ -1,0 +1,14 @@
+[
+  {
+    "type": "SPELL",
+    "id": "wiregnat_eoc_death",
+    "name": "wiregnat eoc death",
+    "copy-from": "trap_base",
+    "effect_str": "EOC_LS_Wiregnat_Death_Spawn"
+  },
+  {
+    "id": "EOC_LS_Wiregnat_Death_Spawn",
+    "type": "effect_on_condition",
+    "effect": [ { "u_spawn_monster": "mon_wiregnat_explosive_2_1", "real_count": [ 1, 3 ], "min_radius": 2, "max_radius": 3 } ]
+  }
+]
