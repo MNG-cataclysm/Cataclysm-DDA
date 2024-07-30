@@ -184,7 +184,6 @@ Sided armor is armor that even though it describes covering, both legs, both arm
   "volume": "500 ml",
   "price": "52 USD",
   "price_postapoc": "2 USD 50 cent",
-  "to_hit": -1,
   "material": [ "leather" ],
   "symbol": "[",
   "looks_like": "sheath",
@@ -574,7 +573,6 @@ FANCY            | Clothing is impractically fancy, (like a top hat)
 SUPER_FANCY      | Even more fancy than fancy
 FILTHY           | Disgusting dirty clothes
 FRAGILE          | Breaks fast
-SLOWS_MOVEMENT   | Slows you down to wear
 
 #### Immunities/Defenses
 **only some of these that are used**

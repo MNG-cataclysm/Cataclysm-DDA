@@ -135,7 +135,7 @@ Note that **all new traits that can be obtained through mutation must be purifia
   "prereqs2": [ "CEPH_EYES", "LIZ_EYE" ],
   "threshreq": [ "THRESH_SPIDER" ],           // Required threshold for this mutation to be possible.
   "cancels": [ "ROT1", "ROT2", "ROT3" ],      // Cancels these mutations when mutating.
-  "changes_to": [ "FASTHEALER2" ],            // Can change into these mutations when mutating further.
+  "changes_to": [ "FASTHEALER2" ],            // Can change into these mutations when mutating further, provided the new trait has this as its prerequisite.
   "leads_to": [ ],                            // Mutations that add to this one.
   "wet_protection": [ { "part": "head", "good": 1 } ],    // Wet Protection on specific bodyparts.  Possible values: "neutral/good/ignored".  Good increases pos and cancels neg, neut cancels neg, ignored cancels both.
   "vitamin_rates": [ [ "vitC", -1200 ] ],     // How much extra vitamins do you consume, one point per this many seconds.  Negative values mean production.
@@ -234,7 +234,7 @@ Note that **all new traits that can be obtained through mutation must be purifia
   "processed_eocs": [ "eoc_id_1" ],           // List of effect_on_conditions that attempt to activate every time (defined above) units of time. Time of 0 means every turn it processes. Processed when the mutation is active for activatable mutations and always for non-activatable ones.
   "deactivated_eocs": [ "eoc_id_1" ],         // List of effect_on_conditions that attempt to activate when this mutation is successfully deactivated.
   "enchantments": [ "ench_id_1" ],            // List of enchantments granted by this mutation.  Can be either IDs or an inline definition of the enchantment (see MAGIC.md)
-  "flags": [ "UNARMED_BONUS" ],               // List of flag_IDs and json_flag_IDs granted by the mutation.  Note: trait_IDs can be set and generate no errors, but they're not actually "active".
+  "flags": [ "WALK_UNDERWATER" ],               // List of flag_IDs and json_flag_IDs granted by the mutation.  Note: trait_IDs can be set and generate no errors, but they're not actually "active".
   "moncams": [ [ "mon_player_blob", 16 ] ],    // Monster cameras, ability to use friendly monster's from the list as additional source of vision. Max view distance is equal to monster's daytime vision. The number specifies the range at which it can "transmit" vision to the avatar.
   "override_look": { "id": "mon_cat_black", "tile_category": "monster" } // Change the character's appearance to another specified thing with a specified ID and tile category. Please ensure that the ID corresponds to the tile category. The valid tile category are "none", "vehicle_part", "terrain", "item", "furniture", "trap", "field", "lighting", "monster", "bullet", "hit_entity", "weather", "overmap_terrain", "map_extra", "overmap_note".
 }

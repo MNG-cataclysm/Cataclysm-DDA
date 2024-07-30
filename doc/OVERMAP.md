@@ -210,6 +210,21 @@ update these definitions as follows:
 }
 ```
 
+### oter_vision
+
+When the overmap is displayed to the player through the map screen, tiles can be displayed with
+varying degrees of information. There are five levels of overmap vision, each providing progressively
+more detail about the shown tile. They are as follows:
+
+- unseen, no information is known about the tile
+- vague, only cursory details such as from a quick glance - broad features
+- outlines, able to distinguish large/visible features
+- details, features that are harder to spot become visible
+- full, all information provided in the **overmap_terrain** is provided
+
+The information on how to display the middle three vision levels is provided in a **oter_vision**
+defintion.
+
 ## Overmap Terrain
 
 ### Rotation
@@ -231,6 +246,7 @@ rotation for the referenced overmap terrains (e.g. the `_north` version for all)
 | `sym`             | Symbol used when drawing the location, like `"F"` (or you may use an ASCII value like `70`).     |
 | `color`           | Color to draw the symbol in. See [COLOR.md](COLOR.md).                                           |
 | `looks_like`      | Id of another overmap terrain to be used for the graphical tile, if this doesn't have one.       |
+| `vision_levels`   | Id of a `oter_vision` that describes how this overmap terrain will be displayed when there is not full vision of the tile.
 | `connect_group`   | Specify that this overmap terrain might be graphically connected to its neighbours, should a tileset wish to.  It will connect to any other `overmap_terrain` with the same `connect_group`. |
 | `see_cost`        | Affects player vision on overmap. Higher values obstruct vision more.                            |
 | `travel_cost_type` | How to treat this location when planning a route using autotravel on the overmap. Valid values are `road`,`field`,`dirt_road`,`trail`,`forest`,`shore`,`swamp`,`water`,`air`,`impassable`,`other`. Some types are harder to travel through with different types of vehicles, or on foot. |
@@ -278,6 +294,42 @@ an exhaustive example...
       "condition": { "math": [ "refugee_centers", "<", "1" ] }, 
       "effect": [ { "math": [ "refugee_centers", "++" ] } ]
     }
+}
+```
+
+## Overmap Vision
+
+### Fields
+
+| Identifier | Description |
+|------------|-------------|
+| type       | Must be `oter_vision` |
+| id         | Identifier of this `oter_vision`. Cannot contain a `$`. |
+| levels     | Array of vision levels. Between 0 and 3 can be specified. The information is specified in the order of vague, outlines, detailed |
+
+For levels, each entry is a JSON object with the following fields
+
+| Identifier | Description |
+|------------|-------------|
+| name       | Same as an overmap_terrain name |
+| sym        | Same as an overmap_terrain sym |
+| color      | Same as an overmap_terrain color |
+| looks_like | overmap_terrain id that will be drawn if there is no tile drawn |
+| blends_adjacent | If true, the other fields will be ignored and instead of drawing this tile, the most common adjacent tile will be selected and drawn instead |
+
+For tilesets, the id for each level will be specified as: `id$VISION_LEVEL`, where `VISION_LEVEL` is
+replaced by one of `vague`, `outlines`, or `details`.
+
+### Example
+
+```json
+{
+  "type": "oter_vision",
+  "id": "example_vision",
+  "levels": [
+    { "blends_adjacent": true },
+    { "name": "example", "sym": "&", "color": "white" }
+  ]
 }
 ```
 
@@ -423,7 +475,7 @@ Depending on the subtype, there are further relevant fields:
     "overmaps": [
       { "point": [ 0, 0, 0 ], "overmap": "campground_1a_north", "locations": [ "forest_edge" ] },
       { "point": [ 1, 0, 0 ], "overmap": "campground_1b_north" },
-      { "point": [ 0, 1, 0 ], "overmap": "campground_2a_north" },
+      { "point": [ 0, 1, 0 ], "overmap": "campground_2a_north", "camp": "isherwood_family", "camp_name": "Campground camp" },
       { "point": [ 1, 1, 0 ], "overmap": "campground_2b_north" }
     ],
     "connections": [ { "point": [ 1, -1, 0 ], "terrain": "road", "connection": "local_road", "from": [ 1, 0, 0 ] } ],
@@ -444,6 +496,8 @@ Depending on the subtype, there are further relevant fields:
 | `point`     | `[ x, y, z]` of the overmap terrain within the special.                                                                                                                                    |
 | `overmap`   | Id of the `overmap_terrain` to place at the location. If ommited no overmap_terrain is placed but the point will still be checked for valid locations when deciding if placement is valid. |
 | `locations` | List of `overmap_location` ids that this overmap terrain may be placed on. Overrides the specials overall `locations` field.                                                               |
+| `camp`      | Will make a NPC-owned camp spawn here when given a value. The entered value is the ID of the faction that owns this camp.                                                                  |
+| `camp_name` | Name that will be displayed on the overmap for the camp.                                                                                                                                   |
 
 ### Connections
 
